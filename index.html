@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script src="employee-rates.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; }
@@ -67,6 +68,8 @@
         <button onClick="{{ nav.socs.onClick }}" style="{{ nav.socs.style }}">▣&nbsp;&nbsp;SOCs</button>
         <div style="font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; padding:16px 10px 5px;">Insights</div>
         <button onClick="{{ nav.an.onClick }}" style="{{ nav.an.style }}">◷&nbsp;&nbsp;Analytics</button>
+        <div style="font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; padding:16px 10px 5px;">Finance</div>
+        <button onClick="{{ nav.payroll.onClick }}" style="{{ nav.payroll.style }}">₱&nbsp;&nbsp;Payroll</button>
         <div style="font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; padding:16px 10px 5px;">Records</div>
         <button onClick="{{ nav.inv.onClick }}" style="{{ nav.inv.style }}">◧&nbsp;&nbsp;Inventory</button>
         <button onClick="{{ nav.veh.onClick }}" style="{{ nav.veh.style }}">▤&nbsp;&nbsp;Vehicles</button>
@@ -97,6 +100,12 @@
     <div title="{{ cloudUserName }}" style="position:fixed; bottom:18px; left:18px; z-index:115; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); padding:7px 12px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,0.18); font-size:11.5px; font-weight:600; color:{{ cloudBadge.text }};">
       <span style="width:8px; height:8px; border-radius:50%; background:{{ cloudBadge.dot }};"></span>
       <span>{{ cloudBadge.label }}</span>
+    </div>
+  </sc-if>
+  <sc-if value="{{ simulationMode }}" hint-placeholder-val="{{ false }}">
+    <div title="Simulation changes stay in this browser and do not sync to Supabase" style="position:fixed; bottom:18px; left:18px; z-index:116; display:flex; align-items:center; gap:8px; background:#201A0E; border:1px solid #7A5A20; padding:7px 12px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,0.22); font-size:11.5px; font-weight:700; color:#F5C86A;">
+      <span style="width:8px; height:8px; border-radius:50%; background:#F2A93C;"></span>
+      <span>Simulation mode</span>
     </div>
   </sc-if>
 
@@ -719,6 +728,90 @@
     </div>
   </sc-if>
 
+  <!-- ===== FINANCE / PAYROLL SECTION ===== -->
+  <sc-if value="{{ isFinance }}" hint-placeholder-val="{{ false }}">
+    <div style="position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <sc-if value="{{ isMobileNav }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleSidebar }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; width:34px; height:34px; cursor:pointer; color:var(--text2); font-size:16px;">≡</button></sc-if>
+      <div style="flex:1; min-width:0;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:18px; color:var(--text);">{{ financeTitle }}</div>
+        <div style="font-size:12px; color:var(--text3);">{{ financeSub }}</div>
+      </div>
+      <button onClick="{{ openSocNewFlow }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:600; color:var(--text2); cursor:pointer;">+ SOC</button>
+    </div>
+    <div style="flex:1; padding:18px 20px 70px; max-width:1280px; width:100%; margin:0 auto;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
+        <sc-for list="{{ payrollTotals }}" as="t" hint-placeholder-count="4">
+          <div style="flex:1; min-width:150px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px;">
+            <div style="font-size:10.5px; color:var(--text3); font-weight:700; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:6px;">{{ t.label }}</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:23px; color:{{ t.color }};">{{ t.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:7px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:8px 12px; flex:1; min-width:220px; max-width:380px;">
+          <div style="width:14px; height:14px; border:1.6px solid var(--text3); border-radius:50%; position:relative; flex-shrink:0;"><div style="position:absolute; width:5px; height:1.6px; background:var(--text3); transform:rotate(45deg); bottom:0px; right:-3px; border-radius:2px;"></div></div>
+          <input type="text" placeholder="Search SOC, client, venue, crew…" value="{{ payrollSearch.value }}" onChange="{{ payrollSearch.onChange }}" style="border:none; background:transparent; font-size:12.5px; color:var(--text); width:100%; padding:0;">
+        </div>
+        <div style="flex:1;"></div>
+        <span style="font-size:11.5px; color:var(--text3); font-weight:600;">{{ payrollCount }}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <sc-for list="{{ payrollEditors }}" as="p" hint-placeholder-count="4">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap;">
+              <button onClick="{{ p.onToggle }}" title="Expand or collapse payroll editor" style="width:28px; height:28px; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; font-size:13px; font-weight:800; flex-shrink:0;">{{ p.chevron }}</button>
+              <div style="flex:1; min-width:220px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <button onClick="{{ p.onOpenSoc }}" style="background:transparent; border:none; padding:0; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13.5px; color:var(--accent); cursor:pointer;">{{ p.no }}</button>
+                  <span style="font-size:13px; font-weight:700; color:var(--text);">{{ p.client }}</span>
+                </div>
+                <div style="font-size:11.5px; color:var(--text3); margin-top:3px;">{{ p.dateLabel }} · {{ p.venue }} · {{ p.manpowerCount }}</div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <div style="min-width:92px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 9px;"><div style="font-size:9.5px; color:var(--text3); font-weight:800; text-transform:uppercase;">Gross</div><div style="font-family:'Space Grotesk',sans-serif; font-weight:800; color:var(--text);">{{ p.gross }}</div></div>
+                <div style="min-width:92px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 9px;"><div style="font-size:9.5px; color:var(--text3); font-weight:800; text-transform:uppercase;">Deductions</div><div style="font-family:'Space Grotesk',sans-serif; font-weight:800; color:var(--danger);">{{ p.deductions }}</div></div>
+                <div style="min-width:104px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 9px;"><div style="font-size:9.5px; color:var(--text3); font-weight:800; text-transform:uppercase;">Net payroll</div><div style="font-family:'Space Grotesk',sans-serif; font-weight:800; color:var(--accent);">{{ p.net }}</div></div>
+              </div>
+            </div>
+            <sc-if value="{{ p.open }}" hint-placeholder-val="{{ true }}">
+            <div style="overflow-x:auto;">
+              <div style="min-width:1822px;">
+                <div style="display:grid; grid-template-columns:34px 190px 120px 92px 82px 96px 150px 96px 92px 112px 112px 124px 132px 118px 132px; gap:8px; padding:10px 14px; background:var(--surface3); border-bottom:1px solid var(--border); font-size:10.5px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.03em;">
+                  <div>No.</div><div>Employee</div><div>Job 1</div><div>Fixed Rate</div><div>Time / Days</div><div>Subtotal</div><div>Others Description</div><div>Others Pay</div><div>Premium/MB</div><div>Cash Advance Balance</div><div>Deductions</div><div>Cash Adv. Forwarded</div><div>Amount Received</div><div>Mode</div><div>Total Without Deductions</div>
+                </div>
+                <sc-for list="{{ p.rows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:grid; grid-template-columns:34px 190px 120px 92px 82px 96px 150px 96px 92px 112px 112px 124px 132px 118px 132px; gap:8px; padding:9px 14px; border-bottom:1px solid var(--border2); align-items:center;">
+                    <span style="font-size:12px; color:var(--text3);">{{ r.no }}</span>
+                    <div title="{{ r.sourceLabel }}" style="border:1px solid var(--border); border-radius:7px; padding:6px 8px; background:var(--surface2); min-width:0;">
+                      <div style="font-size:12.5px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</div>
+                    </div>
+                    <input type="text" value="{{ r.job.value }}" onChange="{{ r.job.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text);">
+                    <input type="text" inputmode="numeric" value="{{ r.rate.value }}" onChange="{{ r.rate.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <input type="text" inputmode="decimal" value="{{ r.days.value }}" onChange="{{ r.days.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12.5px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <span style="font-family:'Space Grotesk',sans-serif; font-size:12.5px; font-weight:700; color:var(--text); text-align:right;">{{ r.subtotal }}</span>
+                    <input type="text" value="{{ r.otherDesc.value }}" onChange="{{ r.otherDesc.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text);">
+                    <input type="text" inputmode="numeric" value="{{ r.otherPay.value }}" onChange="{{ r.otherPay.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <input type="text" inputmode="numeric" value="{{ r.premium.value }}" onChange="{{ r.premium.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <input type="text" inputmode="numeric" value="{{ r.cashBalance.value }}" onChange="{{ r.cashBalance.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <input type="text" inputmode="numeric" value="{{ r.deduction.value }}" onChange="{{ r.deduction.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <input type="text" inputmode="numeric" value="{{ r.cashForwarded.value }}" onChange="{{ r.cashForwarded.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
+                    <span style="font-family:'Space Grotesk',sans-serif; font-size:12.5px; font-weight:700; color:var(--accent); text-align:right;">{{ r.amountReceived }}</span>
+                    <select value="{{ r.mode.value }}" onChange="{{ r.mode.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;"><option value="GCASH">GCASH</option><option value="CASH">CASH</option><option value="BANK">BANK</option><option value="OTHER">OTHER</option></select>
+                    <span style="font-family:'Space Grotesk',sans-serif; font-size:12.5px; font-weight:700; color:var(--text); text-align:right;">{{ r.totalWithoutDeductions }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ payrollEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:34px 20px; text-align:center; font-size:13px; color:var(--text3);">No SOC manpower lists found yet. Create or open a SOC, add Manpower List rows, then payroll editors appear here.</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
   <!-- ===== RECORDS SECTION ===== -->
   <sc-if value="{{ isRecords }}" hint-placeholder-val="{{ false }}">
     <div style="position:sticky; top:0; z-index:20; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -830,16 +923,17 @@
         <div style="font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.03em; margin-bottom:9px;">Crew roster</div>
         <div style="overflow-x:auto;">
           <div style="min-width:820px; background:var(--surface); border:1px solid var(--border); border-radius:13px; overflow:hidden;">
-            <div style="display:grid; grid-template-columns:1.3fr 120px 130px 110px 100px 120px 34px; gap:10px; padding:11px 14px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.03em;">
-              <button onClick="{{ crewSortName.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Name {{ crewSortName.arrow }}</button><button onClick="{{ crewSortClass.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Class {{ crewSortClass.arrow }}</button><button onClick="{{ crewSortTeam.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Team {{ crewSortTeam.arrow }}</button><button onClick="{{ crewSortRole.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Role {{ crewSortRole.arrow }}</button><button onClick="{{ crewSortRate.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Day rate {{ crewSortRate.arrow }}</button><div>Status</div><div></div>
+            <div style="display:grid; grid-template-columns:1.2fr 110px 125px 90px 100px 190px 116px 34px; gap:10px; padding:11px 14px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.03em;">
+              <button onClick="{{ crewSortName.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Name {{ crewSortName.arrow }}</button><button onClick="{{ crewSortClass.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Class {{ crewSortClass.arrow }}</button><button onClick="{{ crewSortTeam.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Team {{ crewSortTeam.arrow }}</button><button onClick="{{ crewSortRole.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Role {{ crewSortRole.arrow }}</button><button onClick="{{ crewSortRate.onClick }}" style="background:none; border:none; color:var(--text3); font:inherit; text-transform:uppercase; letter-spacing:0.03em; cursor:pointer; text-align:left; padding:0;">Primary rate {{ crewSortRate.arrow }}</button><div>Secondary role / rate</div><div>Status</div><div></div>
             </div>
             <sc-for list="{{ crewRows }}" as="r" hint-placeholder-count="8">
-              <div style="display:grid; grid-template-columns:1.3fr 120px 130px 110px 100px 120px 34px; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border2); align-items:center;">
+              <div style="display:grid; grid-template-columns:1.2fr 110px 125px 90px 100px 190px 116px 34px; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border2); align-items:center;">
                 <input type="text" value="{{ r.name.value }}" onChange="{{ r.name.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12.5px; background:var(--surface2); color:var(--text);">
                 <select value="{{ r.cls.value }}" onChange="{{ r.cls.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;"><option value="">—</option><sc-for list="{{ classOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o }}">{{ o }}</option></sc-for></select>
                 <select value="{{ r.team.value }}" onChange="{{ r.team.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;"><sc-for list="{{ crewTeamOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o }}">{{ o }}</option></sc-for></select>
                 <select value="{{ r.role.value }}" onChange="{{ r.role.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;"><option value="">—</option><sc-for list="{{ roleOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for></select>
                 <input type="text" inputmode="numeric" value="{{ r.dayRate.value }}" onChange="{{ r.dayRate.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12.5px; background:var(--surface2); color:var(--text); text-align:right;">
+                <div style="font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ r.secondaryTitle }}">{{ r.secondaryLine }}</div>
                 <select value="{{ r.avail.value }}" onChange="{{ r.avail.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;"><sc-for list="{{ availOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for></select>
                 <button onClick="{{ r.onDelete }}" style="background:none; border:none; color:var(--text3); cursor:pointer; font-size:14px;">✕</button>
               </div>
@@ -2011,6 +2105,10 @@ class Component extends DCLogic {
     docView: null,
     section: 'schedule',
     analyticsTab: 'overview',
+    financeTab: 'payroll',
+    payrollSearch: '',
+    payrollOpen: {},
+    rateSearch: '',
     anEquipOpen: {},
     socsSearch: '',
     socsStatusF: 'all',
@@ -2144,6 +2242,7 @@ class Component extends DCLogic {
   ACCENTS = { Violet:'#7C74F5', Blue:'#4DA8FF', Emerald:'#34E089', Amber:'#F2A93C', Rose:'#F2647E', Indigo:'#5A4BE0', Teal:'#2BB8B8', Coral:'#F0795C' };
 
   componentDidMount() {
+    const simulationMode = this._simulationMode();
     let events = this._load(this.EKEY) || this.seedEvents();
     // one-time migration: apply true CCL costs to existing stored events
     if (!this._load('rma_cost_migrated_v1')) {
@@ -2157,20 +2256,31 @@ class Component extends DCLogic {
     this._save(this.CKEY, config);
     const today = new Date();
     const mi = (today.getFullYear() === 2026) ? today.getMonth() : 5;
-    this.setState({ events, config, monthIndex: mi });
+    this.setState({ events, config, monthIndex: mi, simulationMode });
     this._onResize = () => this.setState({ vw: window.innerWidth });
     window.addEventListener('resize', this._onResize);
     this._cloudBoot();
   }
   componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
 
-  _load(k) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
-  _save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  _simulationMode() {
+    if (typeof window === 'undefined') return false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('sim') === '1') localStorage.setItem('rma_simulation_mode', '1');
+      if (params.get('sim') === '0') localStorage.removeItem('rma_simulation_mode');
+      return params.get('sim') === '1' || localStorage.getItem('rma_simulation_mode') === '1';
+    } catch (e) { return false; }
+  }
+  _storageKey(k) { return this._simulationMode() ? ('rma_sim_' + k) : k; }
+  _load(k) { try { const r = localStorage.getItem(this._storageKey(k)); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+  _save(k, v) { try { localStorage.setItem(this._storageKey(k), JSON.stringify(v)); } catch (e) {} }
 
   // ===================== CLOUD SYNC (Supabase) =====================
   // Entirely optional: with no valid config.js the app runs exactly as before, on localStorage.
   _cloudCfg() {
     if (typeof window === 'undefined') return null;
+    if (this._simulationMode()) return null;
     const c = window.RMA_CONFIG;
     if (!c || !c.SUPABASE_URL || !c.SUPABASE_ANON_KEY) return null;
     if (/YOUR_|example\.supabase/i.test(c.SUPABASE_URL)) return null;
@@ -2902,7 +3012,11 @@ class Component extends DCLogic {
   goSection(sec) { this.setState({ section: sec, sidebarOpen: false, recordDetail: null }); }
   goSchedule(view) { this.setState({ section: 'schedule', view, sidebarOpen: false }); }
   goAnalytics(tab) { this.setState(s => ({ section: 'analytics', analyticsTab: tab || s.analyticsTab || 'overview', sidebarOpen: false })); }
+  goFinance(tab) { this.setState(s => ({ section: 'finance', financeTab: tab || s.financeTab || 'payroll', sidebarOpen: false })); }
   goSocs() { this.setState({ section: 'socs', sidebarOpen: false }); }
+  setPayrollSearch(v) { this.setState({ payrollSearch: v }); }
+  togglePayrollEditor(key) { this.setState(s => ({ payrollOpen: { ...s.payrollOpen, [key]: s.payrollOpen[key] === false } })); }
+  setRateSearch(v) { this.setState({ rateSearch: v }); }
   setSocsSearch(v) { this.setState({ socsSearch: v }); }
   setSocsStatusF(v) { this.setState({ socsStatusF: v }); }
   toggleSocsSort(field) { this.setState(s => ({ socsSort: s.socsSort.field === field ? { field, dir: -s.socsSort.dir } : { field, dir: 1 } })); }
@@ -2938,6 +3052,23 @@ class Component extends DCLogic {
   goRecord(tab) { this.setState({ section: 'records', recordTab: tab, recordDetail: null, sidebarOpen: false, recSearch: '', recSort: { field: '', dir: 1 }, recFilter: 'all' }); }
   setRecSearch(v) { this.setState({ recSearch: v }); }
   setRecFilter(v) { this.setState({ recFilter: v }); }
+  _num(v) { return parseFloat(String(v || '').replace(/[^0-9.-]/g, '')) || 0; }
+  _nameKey(v) { return String(v || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\b(mark|jun|june|jhune|john|jhun)\b/g, '').replace(/\s+/g, ' ').trim(); }
+  _firstNumber(v) { const m = String(v == null ? '' : v).match(/\d+(?:\.\d+)?/); return m ? parseFloat(m[0]) : 0; }
+  updatePayrollManpower(eventId, socId, mpIndex, field, val) {
+    const numeric = ['payRate', 'payDays', 'allowance', 'payOtherAmount', 'payPremium', 'cashAdvanceBalance', 'deduction', 'cashAdvanceForwarded'].includes(field);
+    const nextVal = field === 'paid' ? val === 'paid' : (numeric ? this._num(val) : val);
+    const events = (this.state.events || []).map(e => {
+      if (e.id !== eventId) return e;
+      const socs = (e.socs || []).map(s => {
+        if (s.id !== socId) return s;
+        const manpower = (s.manpower || []).map((m, i) => i === mpIndex ? { ...m, [field]: nextVal } : m);
+        return { ...s, manpower, updatedBy: this._userName(), updatedAt: Date.now() };
+      });
+      return { ...e, socs };
+    });
+    this.commitEvents(events, 'edit payroll');
+  }
   toggleRecSort(field) { this.setState(s => ({ recSort: s.recSort.field === field ? { field, dir: -s.recSort.dir } : { field, dir: 1 } })); }
   toggleRecCat(key) { this.setState(s => ({ recCatOpen: { ...s.recCatOpen, [key]: s.recCatOpen[key] === false } })); }
   _recSort(rows, fields) { const { field, dir } = this.state.recSort; if (!field) return rows; const f = fields[field]; if (!f) return rows; return rows.slice().sort((a, b) => { const av = f(a), bv = f(b); if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir; return String(av).localeCompare(String(bv)) * dir; }); }
@@ -2976,6 +3107,17 @@ class Component extends DCLogic {
     const isDesktop = !isMobile;
     const teamNames = (cfg.teams || []).map(t => t.name);
     const allTeamOptions = teamNames.concat(['Unassigned']);
+    const employeeRates = (typeof window !== 'undefined' && window.RMA_EMPLOYEE_RATES) ? window.RMA_EMPLOYEE_RATES : [];
+    const crewMatchFor = (name) => {
+      const key = this._nameKey(name);
+      let m = (cfg.members || []).find(x => this._nameKey(x.name) === key);
+      if (m) return { member: m, exact: true };
+      m = (cfg.members || []).find(x => {
+        const mk = this._nameKey(x.name);
+        return key && mk && (key.includes(mk) || mk.includes(key));
+      });
+      return { member: m || null, exact: false };
+    };
     const owned = this.ownedMap();
     const conflictIds = this.conflictIdSet(events, owned);
 
@@ -3294,6 +3436,118 @@ class Component extends DCLogic {
         onPreview: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.openDoc(x.ev.id, x.soc.id, 'internal'); },
         statusPill: { display: 'inline-flex', alignItems: 'center', padding: '3px 9px', borderRadius: '999px', background: sm.bg, color: sm.text, fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' } };
     });
+    // ===== Payroll, derived from each SOC manpower list =====
+    const memberRate = (name) => {
+      const rate = employeeRates.find(r => {
+        const rk = this._nameKey(r.name); const nk = this._nameKey(name);
+        return rk === nk || (rk && nk && (rk.includes(nk) || nk.includes(rk)));
+      });
+      if (rate) return this._firstNumber(rate.primaryRate);
+      const m = (cfg.members || []).find(x => (x.name || '') === (name || ''));
+      return m ? (Number(m.dayRate) || 0) : 0;
+    };
+    const payrollQ = (this.state.payrollSearch || '').trim().toLowerCase();
+    let payrollSource = [];
+    (events || []).forEach(e => (e.socs || []).forEach(s => {
+      const manpower = (s.manpower || []).map((m, idx) => ({ m, mpIndex: idx })).filter(x => (x.m.name || '').trim());
+      if (!manpower.length) return;
+      const client = (s.client && s.client.name) || e.client || '—';
+      const venue = s.venue || e.venue || '—';
+      const team = (s.teams && s.teams.length) ? s.teams.join(', ') : (this.eventTeams(e).join(', ') || '—');
+      const hay = (s.no + ' ' + client + ' ' + venue + ' ' + team + ' ' + manpower.map(x => x.m.name).join(' ')).toLowerCase();
+      if (payrollQ && hay.indexOf(payrollQ) === -1) return;
+      payrollSource.push({ ev: e, soc: s, manpower, client, venue, team });
+    }));
+    payrollSource.sort((a, b) => ((a.ev.month || 0) - (b.ev.month || 0)) || ((a.ev.day || 99) - (b.ev.day || 99)) || String(a.soc.no || '').localeCompare(String(b.soc.no || '')));
+    let payrollGross = 0; let payrollDeduct = 0; let payrollNet = 0; let payrollPaid = 0; let payrollCrewCount = 0;
+    const payrollEditors = payrollSource.map(x => {
+      const payrollKey = x.ev.id + ':' + x.soc.id;
+      const payrollOpen = this.state.payrollOpen[payrollKey] !== false;
+      let gross = 0; let deduct = 0; let net = 0;
+      const rows = x.manpower.map((entry, i) => {
+        const m = entry.m;
+        const rate = m.payRate != null ? Number(m.payRate) || 0 : memberRate(m.name);
+        const days = m.payDays != null ? Number(m.payDays) || 0 : 1;
+        const otherPay = m.payOtherAmount != null ? Number(m.payOtherAmount) || 0 : Number(m.allowance) || 0;
+        const premium = Number(m.payPremium) || 0;
+        const cashBalance = Number(m.cashAdvanceBalance) || 0;
+        const deduction = Number(m.deduction) || 0;
+        const cashForwarded = m.cashAdvanceForwarded != null ? Number(m.cashAdvanceForwarded) || 0 : Math.max(0, cashBalance - deduction);
+        const subtotal = rate * days;
+        const rowGross = subtotal + otherPay + premium;
+        const rowNet = rowGross - deduction;
+        gross += rowGross; deduct += deduction; net += rowNet;
+        payrollCrewCount += 1; if (m.paid) payrollPaid += rowNet;
+        const change = (field) => (e) => this.updatePayrollManpower(x.ev.id, x.soc.id, entry.mpIndex, field, e.target.value);
+        const job = m.payJob || m.instructions || m.role || '';
+        return {
+          no: i + 1, name: m.name, sourceLabel: 'Pulled from SOC manpower list row ' + (entry.mpIndex + 1),
+          job: { value: job, onChange: change('payJob') },
+          days: { value: String(days || ''), onChange: change('payDays') },
+          rate: { value: String(rate || ''), onChange: change('payRate') },
+          subtotal: this.fmtPeso(subtotal),
+          otherDesc: { value: m.payOtherDesc || '', onChange: change('payOtherDesc') },
+          otherPay: { value: String(otherPay || ''), onChange: change('payOtherAmount') },
+          premium: { value: String(premium || ''), onChange: change('payPremium') },
+          cashBalance: { value: String(cashBalance || ''), onChange: change('cashAdvanceBalance') },
+          deduction: { value: String(deduction || ''), onChange: change('deduction') },
+          cashForwarded: { value: String(cashForwarded || ''), onChange: change('cashAdvanceForwarded') },
+          amountReceived: this.fmtPeso(rowNet),
+          signature: { value: m.signatureDate || '', onChange: change('signatureDate') },
+          mode: { value: m.paymentMode || 'GCASH', onChange: change('paymentMode') },
+          totalWithoutDeductions: this.fmtPeso(rowNet + deduction)
+        };
+      });
+      payrollGross += gross; payrollDeduct += deduct; payrollNet += net;
+      return {
+        key: payrollKey, open: payrollOpen, chevron: payrollOpen ? '▾' : '▸',
+        no: x.soc.no || 'SOC', client: x.client, venue: x.venue,
+        dateLabel: x.ev.month ? (monthsShort[x.ev.month - 1] + ' ' + ((x.ev.day && x.ev.day < 99) ? x.ev.day : (x.ev.date || ''))) : (x.ev.date || '—'),
+        manpowerCount: rows.length + (rows.length === 1 ? ' crew' : ' crew'), rows,
+        gross: this.fmtPeso(gross), deductions: this.fmtPeso(deduct), net: this.fmtPeso(net),
+        onToggle: () => this.togglePayrollEditor(payrollKey),
+        onOpenSoc: () => this.openSocEdit(x.ev.id, x.soc.id)
+      };
+    });
+    const payrollTotals = [
+      { label: 'SOC payrolls', value: String(payrollEditors.length), color: 'var(--text)' },
+      { label: 'Crew rows', value: String(payrollCrewCount), color: 'var(--text)' },
+      { label: 'Net payroll', value: this.fmtPeso(payrollNet), color: accent },
+      { label: 'Paid out', value: this.fmtPeso(payrollPaid), color: '#1FB573' },
+    ];
+    const rateQ = (this.state.rateSearch || '').trim().toLowerCase();
+    const rateBadge = (kind) => {
+      const colors = { exact: '#1FB573', review: '#E0930F', missing: DANGER };
+      const c = colors[kind] || 'var(--text3)';
+      return { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '3px 8px', borderRadius: '999px', background: this.rgba(c, isLight ? 0.12 : 0.18), color: isLight ? this.shade(c, -0.3) : this.shade(c, 0.35), fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em' };
+    };
+    let rateRows = employeeRates.map(r => {
+      const mt = crewMatchFor(r.name);
+      const kind = mt.member ? (mt.exact ? 'exact' : 'review') : 'missing';
+      return {
+        name: r.name, crewName: mt.member ? mt.member.name : 'Not in Crew', primaryRole: r.primaryRole || '—', primaryRate: r.primaryRate ? (this._firstNumber(r.primaryRate) ? this.fmtPeso(this._firstNumber(r.primaryRate)) : String(r.primaryRate)) : '—',
+        secondaryRole: r.secondaryRole || '—', secondaryRate: r.secondaryRate ? String(r.secondaryRate) : '—',
+        otherRole: r.otherRole || '—', otherRate: r.otherRate ? String(r.otherRate) : '—',
+        monthlyAllowance: r.monthlyAllowance ? this.fmtPeso(Number(r.monthlyAllowance) || 0) : '—',
+        otherAllowance: r.otherAllowance || '—', notes: r.notes || '—',
+        secondaryLine: r.secondaryRole ? (r.secondaryRole + (r.secondaryRate ? ' · ' + r.secondaryRate : '')) : '—',
+        otherLine: r.otherRole ? (r.otherRole + (r.otherRate ? ' · ' + r.otherRate : '')) : '—',
+        allowanceLine: (r.monthlyAllowance ? ('Monthly ' + this.fmtPeso(Number(r.monthlyAllowance) || 0)) : 'No monthly allowance') + (r.otherAllowance ? (' · ' + r.otherAllowance) : ''),
+        team: mt.member ? (mt.member.team || 'Unassigned') : '—',
+        matchLabel: kind === 'exact' ? 'Exact' : (kind === 'review' ? 'Review' : 'Missing'),
+        matchStyle: rateBadge(kind), _kind: kind,
+        _hay: (r.name + ' ' + r.primaryRole + ' ' + r.secondaryRole + ' ' + r.otherRole + ' ' + r.notes + ' ' + (mt.member ? mt.member.team : '')).toLowerCase()
+      };
+    });
+    if (rateQ) rateRows = rateRows.filter(r => r._hay.includes(rateQ));
+    const rateMatched = employeeRates.filter(r => crewMatchFor(r.name).member).length;
+    const rateReview = employeeRates.filter(r => { const m = crewMatchFor(r.name); return m.member && !m.exact; }).length;
+    const rateTotals = [
+      { label: 'Rate records', value: String(employeeRates.length), color: 'var(--text)' },
+      { label: 'Matched to crew', value: String(rateMatched), color: '#1FB573' },
+      { label: 'Needs review', value: String(rateReview), color: '#E0930F' },
+      { label: 'Missing in crew', value: String(employeeRates.length - rateMatched), color: DANGER },
+    ];
     // analytics
     const allActive = events.filter(e => e.status !== 'Cancelled');
     const totalRev = allActive.reduce((a, e) => a + (e.cost || 0), 0);
@@ -3611,7 +3865,7 @@ class Component extends DCLogic {
 
     // ===== RECORDS computations =====
     const section = this.state.section; const recordTab = this.state.recordTab;
-    const isRecords = section === 'records'; const isSchedule = section === 'schedule'; const isAnalytics = section === 'analytics'; const isSocs = section === 'socs';
+    const isRecords = section === 'records'; const isSchedule = section === 'schedule'; const isAnalytics = section === 'analytics'; const isSocs = section === 'socs'; const isFinance = section === 'finance';
     const sideStyle = (active) => ({ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, width: '100%', textAlign: 'left', background: active ? 'var(--accent-soft)' : 'transparent', color: active ? 'var(--accent)' : 'var(--text2)' });
     const nav = {
       cal: { style: sideStyle(isSchedule && this.state.view === 'calendar'), onClick: () => this.goSchedule('calendar') },
@@ -3621,6 +3875,7 @@ class Component extends DCLogic {
       tl: { style: sideStyle(isSchedule && this.state.view === 'timeline'), onClick: () => this.goSchedule('timeline') },
       socs: { style: sideStyle(isSocs), onClick: () => this.goSocs() },
       an: { style: sideStyle(isAnalytics), onClick: () => this.goAnalytics() },
+      payroll: { style: sideStyle(isFinance), onClick: () => this.goFinance('payroll') },
       inv: { style: sideStyle(isRecords && recordTab === 'inventory'), onClick: () => this.goRecord('inventory') },
       veh: { style: sideStyle(isRecords && recordTab === 'vehicles'), onClick: () => this.goRecord('vehicles') },
       crew: { style: sideStyle(isRecords && recordTab === 'crew'), onClick: () => this.goRecord('crew') },
@@ -3677,14 +3932,20 @@ class Component extends DCLogic {
     const vehSortName = this._sortMeta('name'); const vehSortStatus = this._sortMeta('status');
     const availOptions = ['Available', 'On standby', 'On leave', 'Unavailable'];
     const roleOptions = (cfg.crewRoles || this.MANPOWER_ROLES);
+    const rateForCrew = (name) => employeeRates.find(r => {
+      const mt = crewMatchFor(r.name);
+      return mt.member && mt.member.name === name;
+    });
     const crewRows0 = (cfg.members || []).map((m, i) => ({
-      _name: m.name || '', _class: m.class || '', _role: m.role || '', _team: m.team || 'Unassigned', _rate: Number(m.dayRate) || 0,
+      _name: m.name || '', _class: m.class || '', _role: m.role || '', _team: m.team || 'Unassigned', _rate: Number(m.dayRate) || this._firstNumber((rateForCrew(m.name) || {}).primaryRate) || 0,
       name: { value: m.name, onChange: (e) => this.updateMember(i, 'name', e.target.value) },
       cls: { value: m.class || '', onChange: (e) => this.updateMember(i, 'class', e.target.value) },
       role: { value: m.role || '', onChange: (e) => this.updateMember(i, 'role', e.target.value) },
       team: { value: m.team || 'Unassigned', onChange: (e) => this.updateMember(i, 'team', e.target.value) },
       contact: { value: m.contact || '', onChange: (e) => this.updateMember(i, 'contact', e.target.value) },
-      dayRate: { value: String(m.dayRate || 0), onChange: (e) => this.updateMember(i, 'dayRate', parseFloat(String(e.target.value).replace(/[^0-9.]/g, '')) || 0) },
+      dayRate: { value: String((Number(m.dayRate) || this._firstNumber((rateForCrew(m.name) || {}).primaryRate) || 0)), onChange: (e) => this.updateMember(i, 'dayRate', parseFloat(String(e.target.value).replace(/[^0-9.]/g, '')) || 0) },
+      secondaryLine: (() => { const rr = rateForCrew(m.name); if (!rr || !rr.secondaryRole) return '—'; return rr.secondaryRole + (rr.secondaryRate ? ' · ' + rr.secondaryRate : ''); })(),
+      secondaryTitle: (() => { const rr = rateForCrew(m.name); if (!rr) return ''; return [rr.secondaryRole && ('Secondary: ' + rr.secondaryRole + (rr.secondaryRate ? ' · ' + rr.secondaryRate : '')), rr.otherRole && ('Other: ' + rr.otherRole + (rr.otherRate ? ' · ' + rr.otherRate : '')), rr.notes].filter(Boolean).join(' | '); })(),
       avail: { value: m.availability || 'Available', onChange: (e) => this.updateMember(i, 'availability', e.target.value) },
       availStyle: chip2(m.availability || 'Available', m.availability === 'On leave' ? '#E0930F' : (m.availability === 'Unavailable' ? '#E84860' : '#1FB573')),
       onDelete: () => this.deleteMember(i),
@@ -3725,6 +3986,7 @@ class Component extends DCLogic {
     return {
       rootStyle,
       cloudMode: !!this.state.cloudMode,
+      simulationMode: !!this.state.simulationMode,
       gateOpen: !!this.state.gateOpen,
       gateName: this.state.gateName || '', gatePw: this.state.gatePw || '',
       gateBusy: !!this.state.gateBusy, gateError: this.state.gateError || '', gateHasError: !!this.state.gateError,
@@ -3737,8 +3999,14 @@ class Component extends DCLogic {
       cloudBadge: this._cloudBadge(this.state.cloudStatus),
       cloudUserName: this._userName(),
       cloudSignOut: () => this.cloudSignOut(),
-      isSchedule, isRecords, isAnalytics, isSocs, sidebarOpen: this.state.sidebarOpen, toggleSidebar: () => this.toggleSidebar(),
+      isSchedule, isRecords, isAnalytics, isSocs, isFinance, sidebarOpen: this.state.sidebarOpen, toggleSidebar: () => this.toggleSidebar(),
+      financeTitle: 'Payroll',
+      financeSub: 'One payroll editor for each SOC manpower list',
       socsRows, socsEmpty: socsRows.length === 0, socsCount: socsRows.length + (socsRows.length === 1 ? ' SOC' : ' SOCs'),
+      payrollEditors, payrollTotals, payrollEmpty: payrollEditors.length === 0, payrollCount: payrollEditors.length + (payrollEditors.length === 1 ? ' payroll editor' : ' payroll editors'),
+      payrollSearch: { value: this.state.payrollSearch || '', onChange: (e) => this.setPayrollSearch(e.target.value) },
+      rateRows, rateTotals, rateCount: rateRows.length + (rateRows.length === 1 ? ' rate record' : ' rate records'),
+      rateSearch: { value: this.state.rateSearch || '', onChange: (e) => this.setRateSearch(e.target.value) },
       socsSearch: { value: this.state.socsSearch || '', onChange: (e) => this.setSocsSearch(e.target.value) },
       socsStatusF: { value: this.state.socsStatusF || 'all', onChange: (e) => this.setSocsStatusF(e.target.value) },
       socsStatusFOpts: [{ value: 'all', label: 'All statuses' }, { value: 'Draft', label: 'Draft' }, { value: 'Sent', label: 'Sent' }, { value: 'Approved', label: 'Approved' }],
