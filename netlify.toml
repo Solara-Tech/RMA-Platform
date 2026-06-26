@@ -1,0 +1,18 @@
+# Netlify configuration for RMA Schedule
+# The whole app is static files, so there is nothing to build.
+
+[build]
+  publish = "."
+  command = ""
+
+# Single-page app: always serve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Never cache config.js, so editing your Supabase keys takes effect immediately
+[[headers]]
+  for = "/config.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
