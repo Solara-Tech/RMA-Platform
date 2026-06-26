@@ -3438,13 +3438,15 @@ class Component extends DCLogic {
     });
     // ===== Payroll, derived from each SOC manpower list =====
     const memberRate = (name) => {
-      const rate = employeeRates.find(r => {
-        const rk = this._nameKey(r.name); const nk = this._nameKey(name);
+      const matchesName = (recordName) => {
+        const rk = this._nameKey(recordName); const nk = this._nameKey(name);
         return rk === nk || (rk && nk && (rk.includes(nk) || nk.includes(rk)));
-      });
-      if (rate) return this._firstNumber(rate.primaryRate);
-      const m = (cfg.members || []).find(x => (x.name || '') === (name || ''));
-      return m ? (Number(m.dayRate) || 0) : 0;
+      };
+      const member = (cfg.members || []).find(x => matchesName(x.name));
+      const crewRate = member ? (Number(member.dayRate) || this._firstNumber(member.dayRate) || 0) : 0;
+      if (crewRate) return crewRate;
+      const rate = employeeRates.find(r => matchesName(r.name));
+      return rate ? this._firstNumber(rate.primaryRate) : 0;
     };
     const payrollQ = (this.state.payrollSearch || '').trim().toLowerCase();
     let payrollSource = [];
