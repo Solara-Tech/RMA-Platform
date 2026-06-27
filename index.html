@@ -31,6 +31,7 @@
   @keyframes rmaFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes rmaGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   @keyframes rmaPop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes rmaPulseGlow { 0%, 100% { transform: scale(1); opacity: 0.88; } 50% { transform: scale(1.32); opacity: 1; } }
   @media print {
     html, body { background: #fff !important; }
     body * { visibility: hidden !important; }
@@ -145,6 +146,17 @@
           <span style="width:1px; height:18px; background:var(--border); flex-shrink:0;"></span>
           <span style="font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:800; color:var(--text); white-space:nowrap;">{{ clockTime }}</span>
           <span style="font-size:10.5px; font-weight:700; color:var(--text3); white-space:nowrap;">{{ clockDate }} · {{ clockLocation }}</span>
+        </div>
+        <div title="{{ onlineTitle }}" style="{{ onlinePillStyle }}">
+          <span style="{{ onlinePulseStyle }}"></span>
+          <span style="font-size:10.5px; font-weight:800; color:var(--text3); text-transform:uppercase; letter-spacing:0.03em;">Online</span>
+          <span style="font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:800; color:var(--text);">{{ onlineCount }}</span>
+          <div style="display:flex; align-items:center; margin-left:2px;">
+            <sc-for list="{{ onlineAvatars }}" as="u" hint-placeholder-count="2">
+              <span title="{{ u.title }}" style="{{ u.style }}">{{ u.initial }}</span>
+            </sc-for>
+          </div>
+          <span style="font-size:11px; font-weight:700; color:var(--text2); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ onlineSummary }}</span>
         </div>
       </div>
 
@@ -733,6 +745,7 @@
         <div style="font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:18px; color:var(--text);">{{ financeTitle }}</div>
         <div style="font-size:12px; color:var(--text3);">{{ financeSub }}</div>
       </div>
+      <button onClick="{{ addStandalonePayroll }}" style="background:var(--accent); color:var(--accent-text); border:none; border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:700; cursor:pointer; box-shadow:0 0 14px var(--accent-soft);">+ Payroll</button>
       <button onClick="{{ openSocNewFlow }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:600; color:var(--text2); cursor:pointer;">+ SOC</button>
     </div>
     <div style="flex:1; padding:18px 20px 70px; max-width:1280px; width:100%; margin:0 auto;">
@@ -749,6 +762,15 @@
           <div style="width:14px; height:14px; border:1.6px solid var(--text3); border-radius:50%; position:relative; flex-shrink:0;"><div style="position:absolute; width:5px; height:1.6px; background:var(--text3); transform:rotate(45deg); bottom:0px; right:-3px; border-radius:2px;"></div></div>
           <input type="text" placeholder="Search SOC, client, venue, crew…" value="{{ payrollSearch.value }}" onChange="{{ payrollSearch.onChange }}" style="border:none; background:transparent; font-size:12.5px; color:var(--text); width:100%; padding:0;">
         </div>
+        <select value="{{ payrollMonthFilter.value }}" onChange="{{ payrollMonthFilter.onChange }}" style="border:1px solid var(--border); border-radius:9px; padding:8px 11px; font-size:12.5px; background:var(--surface); color:var(--text); cursor:pointer;">
+          <sc-for list="{{ payrollMonthOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+        </select>
+        <select value="{{ payrollKindFilter.value }}" onChange="{{ payrollKindFilter.onChange }}" style="border:1px solid var(--border); border-radius:9px; padding:8px 11px; font-size:12.5px; background:var(--surface); color:var(--text); cursor:pointer;">
+          <sc-for list="{{ payrollKindOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+        </select>
+        <select value="{{ payrollSortFilter.value }}" onChange="{{ payrollSortFilter.onChange }}" style="border:1px solid var(--border); border-radius:9px; padding:8px 11px; font-size:12.5px; background:var(--surface); color:var(--text); cursor:pointer;">
+          <sc-for list="{{ payrollSortOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+        </select>
         <div style="flex:1;"></div>
         <span style="font-size:11.5px; color:var(--text3); font-weight:600;">{{ payrollCount }}</span>
       </div>
@@ -763,6 +785,27 @@
                   <span style="font-size:13px; font-weight:700; color:var(--text);">{{ p.client }}</span>
                 </div>
                 <div style="font-size:11.5px; color:var(--text3); margin-top:3px;">{{ p.dateLabel }} · {{ p.venue }} · {{ p.manpowerCount }}</div>
+                <sc-if value="{{ p.showPayrollTools }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:9px;">
+                    <sc-if value="{{ p.canRename }}" hint-placeholder-val="{{ false }}">
+                      <input type="text" value="{{ p.titleField.value }}" onChange="{{ p.titleField.onChange }}" placeholder="Payroll name" style="min-width:220px; max-width:320px; border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:12px; font-weight:700; background:var(--surface2); color:var(--text);">
+                    </sc-if>
+                    <sc-if value="{{ p.canSetMonth }}" hint-placeholder-val="{{ false }}">
+                      <select value="{{ p.monthField.value }}" onChange="{{ p.monthField.onChange }}" style="min-width:132px; border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;">
+                        <sc-for list="{{ p.monthField.options }}" as="o" hint-placeholder-count="6"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                      </select>
+                    </sc-if>
+                    <sc-if value="{{ p.hasLinkControl }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:10.5px; color:var(--text3); font-weight:800; text-transform:uppercase; letter-spacing:0.03em;">Link SOC</span>
+                      <select value="{{ p.link.value }}" onChange="{{ p.link.onChange }}" style="min-width:240px; max-width:360px; border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:12px; background:var(--surface2); color:var(--text); cursor:pointer;">
+                        <sc-for list="{{ p.link.options }}" as="o" hint-placeholder-count="4"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                      </select>
+                    </sc-if>
+                    <sc-if value="{{ p.canAddEmployee }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ p.onAddEmployee }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 10px; font-size:12px; font-weight:700; color:var(--accent); cursor:pointer;">{{ p.addEmployeeLabel }}</button>
+                    </sc-if>
+                  </div>
+                </sc-if>
               </div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <div style="min-width:92px; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 9px;"><div style="font-size:9.5px; color:var(--text3); font-weight:800; text-transform:uppercase;">Gross</div><div style="font-family:'Space Grotesk',sans-serif; font-weight:800; color:var(--text);">{{ p.gross }}</div></div>
@@ -780,7 +823,8 @@
                   <div style="display:grid; grid-template-columns:34px 190px 120px 92px 82px 96px 150px 96px 92px 112px 112px 124px 132px 118px 132px; gap:8px; padding:9px 14px; border-bottom:1px solid var(--border2); align-items:center;">
                     <span style="font-size:12px; color:var(--text3);">{{ r.no }}</span>
                     <div title="{{ r.sourceLabel }}" style="border:1px solid var(--border); border-radius:7px; padding:6px 8px; background:var(--surface2); min-width:0;">
-                      <div style="font-size:12.5px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</div>
+                      <sc-if value="{{ r.nameReadOnly }}" hint-placeholder-val="{{ true }}"><div style="font-size:12.5px; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r.name }}</div></sc-if>
+                      <sc-if value="{{ r.nameEditable }}" hint-placeholder-val="{{ false }}"><input type="text" value="{{ r.nameField.value }}" onChange="{{ r.nameField.onChange }}" placeholder="Employee name" style="width:100%; min-width:0; border:none; background:transparent; color:var(--text); font-size:12.5px; font-weight:800; padding:0;"></sc-if>
                     </div>
                     <input type="text" value="{{ r.job.value }}" onChange="{{ r.job.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text);">
                     <input type="text" inputmode="numeric" value="{{ r.rate.value }}" onChange="{{ r.rate.onChange }}" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; font-size:12px; background:var(--surface2); color:var(--text); text-align:right;">
@@ -803,7 +847,7 @@
           </div>
         </sc-for>
         <sc-if value="{{ payrollEmpty }}" hint-placeholder-val="{{ false }}">
-          <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:34px 20px; text-align:center; font-size:13px; color:var(--text3);">No SOC manpower lists found yet. Create or open a SOC, add Manpower List rows, then payroll editors appear here.</div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:34px 20px; text-align:center; font-size:13px; color:var(--text3);">No payrolls match the current filters. Choose another month, show all months, or create a standalone payroll.</div>
         </sc-if>
       </div>
     </div>
@@ -1709,6 +1753,7 @@
         <button onClick="{{ doc.onCSV }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 13px; font-size:12.5px; font-weight:600; color:var(--text2); cursor:pointer;">⬇ CSV</button>
         <button onClick="{{ doc.onPrint }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:600; color:var(--text2); cursor:pointer;">⎙ Print / PDF</button>
         <button onClick="{{ doc.onExportPDF }}" style="background:var(--accent); border:none; border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:600; color:var(--accent-text); cursor:pointer;">⬇ Export as PDF</button>
+        <button onClick="{{ doc.onImage }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:600; color:var(--text2); cursor:pointer;">⬇ Image</button>
         <button onClick="{{ doc.onClose }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; width:34px; height:34px; cursor:pointer; color:var(--text2); font-size:15px;">✕</button>
       </div>
 
@@ -2105,6 +2150,9 @@ class Component extends DCLogic {
     financeTab: 'payroll',
     payrollSearch: '',
     payrollOpen: {},
+    payrollMonthF: '',
+    payrollKindF: 'all',
+    payrollSort: 'dateAsc',
     rateSearch: '',
     anEquipOpen: {},
     socsSearch: '',
@@ -2121,6 +2169,7 @@ class Component extends DCLogic {
     recEditor: null,
     sidebarOpen: false,
     clockNow: Date.now(),
+    onlineUsers: [],
     vw: (typeof window !== 'undefined' ? window.innerWidth : 1280),
   };
 
@@ -2263,6 +2312,7 @@ class Component extends DCLogic {
   componentWillUnmount() {
     if (this._onResize) window.removeEventListener('resize', this._onResize);
     if (this._clockTimer) window.clearInterval(this._clockTimer);
+    this._presenceStop();
   }
 
   _simulationMode() {
@@ -2290,6 +2340,43 @@ class Component extends DCLogic {
     return c;
   }
   _userName() { try { return localStorage.getItem('rma_user_name') || 'Someone'; } catch (e) { return 'Someone'; } }
+  _presenceName() { const n = this._userName(); return (!n || n === 'Someone') ? 'You' : n; }
+  _presenceStateToUsers(state) {
+    const byName = {};
+    Object.keys(state || {}).forEach(key => (state[key] || []).forEach(meta => {
+      const raw = String((meta && (meta.name || meta.userName || meta.user)) || key || '').trim();
+      if (!raw) return;
+      const name = raw === 'Someone' ? 'You' : raw;
+      const nk = name.toLowerCase();
+      const at = (meta && (meta.onlineAt || meta.at)) || '';
+      if (!byName[nk] || String(at) > String(byName[nk].onlineAt || '')) byName[nk] = { name, onlineAt: at };
+    }));
+    return Object.keys(byName).map(k => byName[k]).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  _presenceRefresh() {
+    if (!this._presenceChan || !this._presenceChan.presenceState) return;
+    this.setState({ onlineUsers: this._presenceStateToUsers(this._presenceChan.presenceState()) });
+  }
+  _presenceTrack() {
+    if (!this._presenceChan || !this._presenceChan.track) return;
+    try { this._presenceChan.track({ name: this._presenceName(), onlineAt: new Date().toISOString() }); } catch (e) {}
+  }
+  _presenceSubscribe() {
+    const sb = this._sb; if (!sb || this._presenceChan) return;
+    const key = 'tab-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    try {
+      this._presenceChan = sb.channel('rma-team-online', { config: { presence: { key } } });
+      this._presenceChan.on('presence', { event: 'sync' }, () => this._presenceRefresh());
+      this._presenceChan.subscribe(status => { if (status === 'SUBSCRIBED') this._presenceTrack(); });
+      if (typeof window !== 'undefined') this._presenceTimer = window.setInterval(() => this._presenceTrack(), 45000);
+    } catch (e) { this._presenceChan = null; }
+  }
+  _presenceStop() {
+    if (this._presenceTimer && typeof window !== 'undefined') window.clearInterval(this._presenceTimer);
+    this._presenceTimer = null;
+    if (this._presenceChan && this._sb && this._sb.removeChannel) { try { this._sb.removeChannel(this._presenceChan); } catch (e) {} }
+    this._presenceChan = null;
+  }
   _socStamp(s) {
     if (!s) return '';
     const fmt = (t) => { try { return new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return ''; } };
@@ -2345,10 +2432,11 @@ class Component extends DCLogic {
     }).catch(() => this.setState({ gateBusy: false, gateError: 'Network error \u2014 check your connection' }));
   }
   cloudSignOut() {
+    this._presenceStop();
     if (this._sb) this._sb.auth.signOut().then(() => { if (typeof window !== 'undefined') window.location.reload(); });
     else if (typeof window !== 'undefined') window.location.href = window.location.pathname;
   }
-  _afterSignIn() { this._cloudPull(true); this._cloudSubscribe(); }
+  _afterSignIn() { this._cloudPull(true); this._cloudSubscribe(); this._presenceSubscribe(); }
   _cloudPull(initial) {
     const sb = this._sb; if (!sb) return;
     this.setState({ cloudStatus: 'connecting' });
@@ -2463,6 +2551,8 @@ class Component extends DCLogic {
     // migrate equipment categories to the taxonomy (against default keys at mount)
     const validKeys = cfg.catGroups.map(g => g.key);
     (cfg.equipment || []).forEach(e => { const k = this.catKey(e.cat); e.cat = validKeys.includes(k) ? k : validKeys[0]; });
+    if (!Array.isArray(cfg.payrolls)) cfg.payrolls = [];
+    cfg.payrolls = cfg.payrolls.map((p, i) => { const id = p.id || ('payroll_' + i); const manpower = Array.isArray(p.manpower) ? p.manpower : []; return Object.assign({ id, title: 'Standalone payroll', socLink: '', client: '', venue: '', date: '', manpower }, p, { id, manpower }); });
     return cfg;
   }
 
@@ -2982,6 +3072,47 @@ class Component extends DCLogic {
     const go = () => { try { w.print(); } catch (e) {} };
     if (w.document.readyState === 'complete') setTimeout(go, 450); else w.onload = () => setTimeout(go, 450);
   }
+  exportDocImage(soc) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const el = document.getElementById('rma-doc');
+    if (!el) { this._toast('Open an SOC preview first', false); return; }
+    const width = Math.ceil(el.scrollWidth || el.getBoundingClientRect().width || 820);
+    const height = Math.ceil(el.scrollHeight || el.getBoundingClientRect().height || 1100);
+    const clone = el.cloneNode(true);
+    clone.style.width = width + 'px'; clone.style.maxWidth = 'none'; clone.style.boxShadow = 'none'; clone.style.borderRadius = '0'; clone.style.margin = '0';
+    const imageFont = 'Arial, Helvetica, sans-serif';
+    clone.style.fontFamily = imageFont;
+    Array.prototype.forEach.call(clone.querySelectorAll('*'), node => { if (node.style) node.style.fontFamily = imageFont; });
+    const xhtml = new XMLSerializer().serializeToString(clone);
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '"><foreignObject width="100%" height="100%">' + xhtml + '</foreignObject></svg>';
+    const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    const mode = (this.state.docView && this.state.docView.mode) || 'soc';
+    const base = String((soc && soc.no) || 'SOC').replace(/[^a-z0-9_-]+/ig, '-').replace(/^-+|-+$/g, '') || 'SOC';
+    const downloadBlob = (blob, ext, toast) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = base + '-' + mode + ext; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+      if (toast) this._toast(toast, false);
+    };
+    img.onload = () => {
+      const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+      const canvas = document.createElement('canvas'); canvas.width = Math.ceil(width * scale); canvas.height = Math.ceil(height * scale);
+      const ctx = canvas.getContext('2d'); ctx.scale(scale, scale); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height); ctx.drawImage(img, 0, 0);
+      try {
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(svgUrl);
+          if (!blob) { this._toast('Image export failed - use Print / PDF', false); return; }
+          downloadBlob(blob, '.png', 'SOC image exported');
+        }, 'image/png');
+      } catch (e) {
+        URL.revokeObjectURL(svgUrl);
+        downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), '.svg', 'SOC image exported as SVG');
+      }
+    };
+    img.onerror = () => { URL.revokeObjectURL(svgUrl); downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), '.svg', 'SOC image exported as SVG'); };
+    img.src = svgUrl;
+  }
   exportSocCSV(soc, ev) {
     const t = this.socTotals(soc);
     const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
@@ -3086,6 +3217,47 @@ class Component extends DCLogic {
     });
     this.commitEvents(events, 'edit payroll');
   }
+  _standalonePayrollRow() { return { name: '', payJob: '', payDays: 1, payOtherDesc: '', payOtherAmount: 0, payPremium: 0, cashAdvanceBalance: 0, deduction: 0, cashAdvanceForwarded: 0, paymentMode: 'GCASH' }; }
+  _socPayrollRow() { return { name: '', role: '', class: 'OTHERS', instructions: '', payDays: 1, paymentMode: 'GCASH', payrollAdded: true }; }
+  addSocPayrollManpower(eventId, socId) {
+    const payrollKey = eventId + ':' + socId;
+    const events = (this.state.events || []).map(e => {
+      if (e.id !== eventId) return e;
+      const socs = (e.socs || []).map(s => {
+        if (s.id !== socId) return s;
+        return { ...s, manpower: [...(s.manpower || []), this._socPayrollRow()], updatedBy: this._userName(), updatedAt: Date.now() };
+      });
+      return { ...e, socs };
+    });
+    this.commitEvents(events, 'add payroll employee');
+    this.setState(st => ({ payrollOpen: { ...st.payrollOpen, [payrollKey]: true } }));
+    this._toast('Employee row added to SOC manpower', false);
+  }
+  addStandalonePayroll() {
+    const id = 'pay' + Date.now();
+    const payroll = { id, title: 'Standalone payroll', socLink: '', client: 'Unlinked payroll', venue: '', date: '', month: (this.state.monthIndex || 0) + 1, manpower: [this._standalonePayrollRow()] };
+    this.setCfg({ payrolls: [...((this.state.config && this.state.config.payrolls) || []), payroll] }, 'add payroll');
+    this.setState(s => ({ section: 'finance', financeTab: 'payroll', payrollOpen: { ...s.payrollOpen, ['standalone:' + id]: true } }));
+    this._toast('Standalone payroll created', false);
+  }
+  updateStandalonePayroll(id, field, val) {
+    const payrolls = ((this.state.config && this.state.config.payrolls) || []).map(p => p.id === id ? { ...p, [field]: val } : p);
+    this.setCfg({ payrolls }, 'edit payroll');
+  }
+  updateStandalonePayrollRow(id, rowIndex, field, val) {
+    const numeric = ['payRate', 'payDays', 'allowance', 'payOtherAmount', 'payPremium', 'cashAdvanceBalance', 'deduction', 'cashAdvanceForwarded'].includes(field);
+    const nextVal = field === 'paid' ? val === 'paid' : (numeric ? this._num(val) : val);
+    const payrolls = ((this.state.config && this.state.config.payrolls) || []).map(p => {
+      if (p.id !== id) return p;
+      const manpower = (p.manpower || []).map((m, i) => i === rowIndex ? { ...m, [field]: nextVal } : m);
+      return { ...p, manpower };
+    });
+    this.setCfg({ payrolls }, 'edit payroll');
+  }
+  addStandalonePayrollRow(id) {
+    const payrolls = ((this.state.config && this.state.config.payrolls) || []).map(p => p.id === id ? { ...p, manpower: [...(p.manpower || []), this._standalonePayrollRow()] } : p);
+    this.setCfg({ payrolls }, 'add payroll row');
+  }
   toggleRecSort(field) { this.setState(s => ({ recSort: s.recSort.field === field ? { field, dir: -s.recSort.dir } : { field, dir: 1 } })); }
   toggleRecCat(key) { this.setState(s => ({ recCatOpen: { ...s.recCatOpen, [key]: s.recCatOpen[key] === false } })); }
   _recSort(rows, fields) { const { field, dir } = this.state.recSort; if (!field) return rows; const f = fields[field]; if (!f) return rows; return rows.slice().sort((a, b) => { const av = f(a), bv = f(b); if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir; return String(av).localeCompare(String(bv)) * dir; }); }
@@ -3127,7 +3299,17 @@ class Component extends DCLogic {
     const statusBadge = this.state.simulationMode ? { label: 'Simulation mode', dot: '#F2A93C', text: '#F5C86A' } : (this.state.cloudMode ? baseCloudBadge : { label: 'Local preview', dot: '#8A93A3', text: 'var(--text2)' });
     const statusTitle = (this.state.cloudMode ? this._userName() + ' · ' : '') + statusBadge.label + ' · ' + clock.date + ' ' + clock.time + ' · ' + clock.location;
     const statusHeaderStyle = { display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '999px', border: '1px solid var(--border)', background: 'var(--surface2)', minWidth: 0, maxWidth: '100%', boxShadow: '0 6px 18px rgba(0,0,0,0.12)' };
-    const statusDotStyle = { width: '9px', height: '9px', borderRadius: '50%', background: statusBadge.dot, boxShadow: '0 0 0 4px ' + this.rgba(statusBadge.dot, isLight ? 0.14 : 0.20) + ', 0 0 15px ' + statusBadge.dot, flexShrink: 0 };
+    const statusDotStyle = { width: '9px', height: '9px', borderRadius: '50%', background: statusBadge.dot, boxShadow: '0 0 0 4px ' + this.rgba(statusBadge.dot, isLight ? 0.14 : 0.20) + ', 0 0 15px ' + statusBadge.dot, flexShrink: 0, animation: 'rmaPulseGlow 1.55s ease-in-out infinite', transformOrigin: 'center' };
+    let onlineUsers = (this.state.onlineUsers || []).filter(u => u && u.name);
+    if (!onlineUsers.length && (this.state.simulationMode || !this.state.cloudMode)) onlineUsers = [{ name: this._presenceName(), onlineAt: new Date().toISOString() }];
+    const onlineNames = onlineUsers.map(u => u.name);
+    const onlineCount = String(onlineUsers.length);
+    const onlineSummary = onlineNames.length ? (onlineNames.slice(0, 2).join(', ') + (onlineNames.length > 2 ? ' +' + (onlineNames.length - 2) : '')) : 'Sign in';
+    const onlineTitle = onlineNames.length ? ('Online now: ' + onlineNames.join(', ')) : 'Sign in to see who is online';
+    const onlinePillStyle = { display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 10px', borderRadius: '999px', border: '1px solid var(--border)', background: 'var(--surface2)', minWidth: 0, maxWidth: '100%', boxShadow: '0 6px 18px rgba(0,0,0,0.10)' };
+    const onlinePulseStyle = { width: '8px', height: '8px', borderRadius: '50%', background: onlineUsers.length ? '#34E089' : '#8A93A3', boxShadow: '0 0 0 4px ' + this.rgba(onlineUsers.length ? '#34E089' : '#8A93A3', isLight ? 0.12 : 0.18), flexShrink: 0, animation: onlineUsers.length ? 'rmaPulseGlow 1.8s ease-in-out infinite' : 'none' };
+    const onlineColors = ['#34E089', '#4DA8FF', '#F2A93C'];
+    const onlineAvatars = onlineUsers.slice(0, 3).map((u, i) => ({ title: u.name, initial: String(u.name || '?').trim().slice(0, 1).toUpperCase() || '?', style: { width: '20px', height: '20px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginLeft: i ? '-6px' : '0', background: onlineColors[i % onlineColors.length], color: this.contrastText(onlineColors[i % onlineColors.length]), border: '2px solid var(--surface2)', fontSize: '10px', fontWeight: 900, flexShrink: 0 } }));
     const teamNames = (cfg.teams || []).map(t => t.name);
     const allTeamOptions = teamNames.concat(['Unassigned']);
     const employeeRates = (typeof window !== 'undefined' && window.RMA_EMPLOYEE_RATES) ? window.RMA_EMPLOYEE_RATES : [];
@@ -3472,41 +3654,51 @@ class Component extends DCLogic {
       return rate ? this._firstNumber(rate.primaryRate) : 0;
     };
     const payrollQ = (this.state.payrollSearch || '').trim().toLowerCase();
-    let payrollSource = [];
+    const payrollMonthValue = this.state.payrollMonthF || String((mi || 0) + 1);
+    const payrollKindValue = this.state.payrollKindF || 'all';
+    const payrollSortValue = this.state.payrollSort || 'dateAsc';
+    const standaloneMonthOptions = months.map((m, i) => ({ value: String(i + 1), label: m }));
+    const monthAllowed = (month) => payrollMonthValue === 'all' || (payrollMonthValue === 'unscheduled' ? !month : String(month || '') === String(payrollMonthValue));
+    const kindAllowsSoc = payrollKindValue === 'all' || payrollKindValue === 'soc';
+    const kindAllowsStandalone = payrollKindValue === 'all' || payrollKindValue === 'standalone' || payrollKindValue === 'linked' || payrollKindValue === 'unlinked';
+    const socLookup = {};
+    const socLinkOptions = [{ value: '', label: 'Unlinked' }];
     (events || []).forEach(e => (e.socs || []).forEach(s => {
-      const manpower = (s.manpower || []).map((m, idx) => ({ m, mpIndex: idx })).filter(x => (x.m.name || '').trim());
-      if (!manpower.length) return;
       const client = (s.client && s.client.name) || e.client || '—';
       const venue = s.venue || e.venue || '—';
       const team = (s.teams && s.teams.length) ? s.teams.join(', ') : (this.eventTeams(e).join(', ') || '—');
-      const hay = (s.no + ' ' + client + ' ' + venue + ' ' + team + ' ' + manpower.map(x => x.m.name).join(' ')).toLowerCase();
-      if (payrollQ && hay.indexOf(payrollQ) === -1) return;
-      payrollSource.push({ ev: e, soc: s, manpower, client, venue, team });
+      const dateLabel = e.month ? (monthsShort[e.month - 1] + ' ' + ((e.day && e.day < 99) ? e.day : (e.date || ''))) : (e.date || '—');
+      const key = e.id + ':' + s.id;
+      socLookup[key] = { ev: e, soc: s, client, venue, team, dateLabel, label: (s.no || 'SOC') + ' · ' + client + ' · ' + dateLabel };
+      socLinkOptions.push({ value: key, label: socLookup[key].label });
     }));
-    payrollSource.sort((a, b) => ((a.ev.month || 0) - (b.ev.month || 0)) || ((a.ev.day || 99) - (b.ev.day || 99)) || String(a.soc.no || '').localeCompare(String(b.soc.no || '')));
+    let payrollSource = [];
+    if (kindAllowsSoc) (events || []).forEach(e => (e.socs || []).forEach(s => {
+      if (!monthAllowed(e.month || 0)) return;
+      const manpower = (s.manpower || []).map((m, idx) => ({ m, mpIndex: idx })).filter(x => (x.m.name || x.m.payrollAdded || x.m.payJob || x.m.payRate != null || x.m.payOtherAmount != null));
+      if (!manpower.length) return;
+      const linked = socLookup[e.id + ':' + s.id] || {};
+      const hay = (s.no + ' ' + (linked.client || '') + ' ' + (linked.venue || '') + ' ' + (linked.team || '') + ' ' + manpower.map(x => x.m.name).join(' ')).toLowerCase();
+      if (payrollQ && hay.indexOf(payrollQ) === -1) return;
+      payrollSource.push({ ev: e, soc: s, manpower, client: linked.client || '—', venue: linked.venue || '—', team: linked.team || '—', dateLabel: linked.dateLabel || '—' });
+    }));
     let payrollGross = 0; let payrollDeduct = 0; let payrollNet = 0; let payrollPaid = 0; let payrollCrewCount = 0;
-    const payrollEditors = payrollSource.map(x => {
-      const payrollKey = x.ev.id + ':' + x.soc.id;
-      const payrollOpen = this.state.payrollOpen[payrollKey] !== false;
-      let gross = 0; let deduct = 0; let net = 0;
-      const rows = x.manpower.map((entry, i) => {
-        const m = entry.m;
-        const rate = m.payRate != null ? Number(m.payRate) || 0 : memberRate(m.name);
-        const days = m.payDays != null ? Number(m.payDays) || 0 : 1;
-        const otherPay = m.payOtherAmount != null ? Number(m.payOtherAmount) || 0 : Number(m.allowance) || 0;
-        const premium = Number(m.payPremium) || 0;
-        const cashBalance = Number(m.cashAdvanceBalance) || 0;
-        const deduction = Number(m.deduction) || 0;
-        const cashForwarded = m.cashAdvanceForwarded != null ? Number(m.cashAdvanceForwarded) || 0 : Math.max(0, cashBalance - deduction);
-        const subtotal = rate * days;
-        const rowGross = subtotal + otherPay + premium;
-        const rowNet = rowGross - deduction;
-        gross += rowGross; deduct += deduction; net += rowNet;
-        payrollCrewCount += 1; if (m.paid) payrollPaid += rowNet;
-        const change = (field) => (e) => this.updatePayrollManpower(x.ev.id, x.soc.id, entry.mpIndex, field, e.target.value);
-        const job = m.payJob || m.instructions || m.role || '';
-        return {
-          no: i + 1, name: m.name, sourceLabel: 'Pulled from SOC manpower list row ' + (entry.mpIndex + 1),
+    const makePayrollRow = (m, i, change, sourceLabel, editableName) => {
+      const rate = m.payRate != null ? Number(m.payRate) || 0 : memberRate(m.name);
+      const days = m.payDays != null ? Number(m.payDays) || 0 : 1;
+      const otherPay = m.payOtherAmount != null ? Number(m.payOtherAmount) || 0 : Number(m.allowance) || 0;
+      const premium = Number(m.payPremium) || 0;
+      const cashBalance = Number(m.cashAdvanceBalance) || 0;
+      const deduction = Number(m.deduction) || 0;
+      const cashForwarded = m.cashAdvanceForwarded != null ? Number(m.cashAdvanceForwarded) || 0 : Math.max(0, cashBalance - deduction);
+      const subtotal = rate * days;
+      const rowGross = subtotal + otherPay + premium;
+      const rowNet = rowGross - deduction;
+      const job = m.payJob || m.instructions || m.role || '';
+      return {
+        row: {
+          no: i + 1, name: m.name || '', sourceLabel,
+          nameReadOnly: !editableName, nameEditable: !!editableName, nameField: { value: m.name || '', onChange: change('name') },
           job: { value: job, onChange: change('payJob') },
           days: { value: String(days || ''), onChange: change('payDays') },
           rate: { value: String(rate || ''), onChange: change('payRate') },
@@ -3521,21 +3713,90 @@ class Component extends DCLogic {
           signature: { value: m.signatureDate || '', onChange: change('signatureDate') },
           mode: { value: m.paymentMode || 'GCASH', onChange: change('paymentMode') },
           totalWithoutDeductions: this.fmtPeso(rowNet + deduction)
-        };
+        },
+        gross: rowGross, deduct: deduction, net: rowNet, paid: m.paid ? rowNet : 0
+      };
+    };
+    const socPayrollEditors = payrollSource.map(x => {
+      const payrollKey = x.ev.id + ':' + x.soc.id;
+      const payrollOpen = this.state.payrollOpen[payrollKey] !== false;
+      let gross = 0; let deduct = 0; let net = 0;
+      const rows = x.manpower.map((entry, i) => {
+        const change = (field) => (e) => this.updatePayrollManpower(x.ev.id, x.soc.id, entry.mpIndex, field, e.target.value);
+        const built = makePayrollRow(entry.m, i, change, 'Pulled from SOC manpower list row ' + (entry.mpIndex + 1), !!entry.m.payrollAdded || !(entry.m.name || '').trim());
+        gross += built.gross; deduct += built.deduct; net += built.net;
+        payrollCrewCount += 1; payrollPaid += built.paid;
+        return built.row;
       });
       payrollGross += gross; payrollDeduct += deduct; payrollNet += net;
       return {
         key: payrollKey, open: payrollOpen, chevron: payrollOpen ? '▾' : '▸',
         no: x.soc.no || 'SOC', client: x.client, venue: x.venue,
-        dateLabel: x.ev.month ? (monthsShort[x.ev.month - 1] + ' ' + ((x.ev.day && x.ev.day < 99) ? x.ev.day : (x.ev.date || ''))) : (x.ev.date || '—'),
+        dateLabel: x.dateLabel,
         manpowerCount: rows.length + (rows.length === 1 ? ' crew' : ' crew'), rows,
         gross: this.fmtPeso(gross), deductions: this.fmtPeso(deduct), net: this.fmtPeso(net),
+        _kind: 'soc', _month: x.ev.month || 0, _day: x.ev.day || 99, _client: x.client || '', _net: net, _no: x.soc.no || '',
+        showPayrollTools: true, canRename: false, titleField: { value: '', onChange: () => {} },
+        canSetMonth: false, monthField: { value: '', onChange: () => {}, options: [] },
+        hasLinkControl: false, link: { value: '', onChange: () => {}, options: [] },
+        canAddEmployee: true, addEmployeeLabel: '+ Employee', onAddEmployee: () => this.addSocPayrollManpower(x.ev.id, x.soc.id),
         onToggle: () => this.togglePayrollEditor(payrollKey),
         onOpenSoc: () => this.openSocEdit(x.ev.id, x.soc.id)
       };
     });
+    const standalonePayrolls = kindAllowsStandalone ? ((cfg.payrolls || []).filter(Boolean)).filter(p => {
+      const linked = socLookup[p.socLink || ''];
+      if (payrollKindValue === 'linked' && !linked) return false;
+      if (payrollKindValue === 'unlinked' && linked) return false;
+      const payrollMonth = linked ? (linked.ev.month || 0) : (Number(p.month) || 0);
+      if (!monthAllowed(payrollMonth)) return false;
+      const rows = p.manpower || [];
+      const hay = ((p.title || '') + ' ' + (p.client || '') + ' ' + (p.venue || '') + ' ' + (p.date || '') + ' ' + (linked ? linked.label : '') + ' ' + rows.map(r => r.name || '').join(' ')).toLowerCase();
+      return !payrollQ || hay.indexOf(payrollQ) !== -1;
+    }) : [];
+    const standalonePayrollEditors = standalonePayrolls.map(p => {
+      const payrollKey = 'standalone:' + p.id;
+      const payrollOpen = this.state.payrollOpen[payrollKey] !== false;
+      const linked = socLookup[p.socLink || ''];
+      let gross = 0; let deduct = 0; let net = 0;
+      const rows = (p.manpower || []).map((m, i) => {
+        const change = (field) => (e) => this.updateStandalonePayrollRow(p.id, i, field, e.target.value);
+        const built = makePayrollRow(m, i, change, 'Standalone payroll row ' + (i + 1), true);
+        gross += built.gross; deduct += built.deduct; net += built.net;
+        payrollCrewCount += 1; payrollPaid += built.paid;
+        return built.row;
+      });
+      payrollGross += gross; payrollDeduct += deduct; payrollNet += net;
+      return {
+        key: payrollKey, open: payrollOpen, chevron: payrollOpen ? '▾' : '▸',
+        no: linked ? (linked.soc.no || 'Linked SOC') : 'Standalone',
+        client: p.title || p.client || (linked ? linked.client : 'Unlinked payroll'),
+        venue: linked ? linked.venue : (p.venue || 'No venue yet'),
+        dateLabel: linked ? linked.dateLabel : ((Number(p.month) ? months[Number(p.month) - 1] : (p.date || 'No month yet'))),
+        manpowerCount: rows.length + (rows.length === 1 ? ' crew' : ' crew'), rows,
+        gross: this.fmtPeso(gross), deductions: this.fmtPeso(deduct), net: this.fmtPeso(net),
+        _kind: linked ? 'linked' : 'unlinked', _month: linked ? (linked.ev.month || 0) : (Number(p.month) || 0), _day: linked ? (linked.ev.day || 99) : 99, _client: p.title || p.client || '', _net: net, _no: linked ? (linked.soc.no || '') : 'Standalone',
+        showPayrollTools: true, canRename: true,
+        titleField: { value: p.title || 'Standalone payroll', onChange: (e) => this.updateStandalonePayroll(p.id, 'title', e.target.value) },
+        canSetMonth: !linked, monthField: { value: String(Number(p.month) || ((mi || 0) + 1)), onChange: (e) => this.updateStandalonePayroll(p.id, 'month', e.target.value), options: standaloneMonthOptions },
+        hasLinkControl: true,
+        link: { value: p.socLink || '', onChange: (e) => this.updateStandalonePayroll(p.id, 'socLink', e.target.value), options: socLinkOptions },
+        canAddEmployee: true, addEmployeeLabel: '+ Employee', onAddEmployee: () => this.addStandalonePayrollRow(p.id),
+        onToggle: () => this.togglePayrollEditor(payrollKey),
+        onOpenSoc: () => { if (linked) this.openSocEdit(linked.ev.id, linked.soc.id); }
+      };
+    });
+    const payrollEditors = socPayrollEditors.concat(standalonePayrollEditors);
+    const payrollSorter = {
+      dateAsc: (a, b) => ((a._month || 13) - (b._month || 13)) || ((a._day || 99) - (b._day || 99)) || String(a._no || '').localeCompare(String(b._no || '')),
+      dateDesc: (a, b) => ((b._month || 0) - (a._month || 0)) || ((b._day || 0) - (a._day || 0)) || String(a._no || '').localeCompare(String(b._no || '')),
+      clientAsc: (a, b) => String(a._client || '').localeCompare(String(b._client || '')) || ((a._month || 13) - (b._month || 13)),
+      netDesc: (a, b) => (b._net || 0) - (a._net || 0),
+      netAsc: (a, b) => (a._net || 0) - (b._net || 0),
+    }[payrollSortValue] || null;
+    if (payrollSorter) payrollEditors.sort(payrollSorter);
     const payrollTotals = [
-      { label: 'SOC payrolls', value: String(payrollEditors.length), color: 'var(--text)' },
+      { label: 'Payrolls', value: String(payrollEditors.length), color: 'var(--text)' },
       { label: 'Crew rows', value: String(payrollCrewCount), color: 'var(--text)' },
       { label: 'Net payroll', value: this.fmtPeso(payrollNet), color: accent },
       { label: 'Paid out', value: this.fmtPeso(payrollPaid), color: '#1FB573' },
@@ -3881,7 +4142,7 @@ class Component extends DCLogic {
           extras: (soc.extras || []).map(x => ({ label: x.label, amount: this.fmtPeso(x.amount) })),
           gross: this.fmtPeso(t.gross), discount: soc.discount ? ('− ' + this.fmtPeso(soc.discount)) : this.fmtPeso(0), net: this.fmtPeso(t.net), hasDiscount: !!soc.discount,
           terms: soc.terms || [],
-          onClose: () => this.closeDoc(), onPrint: () => this.printDoc(), onExportPDF: () => this.exportDocPDF(soc), onCSV: () => this.exportSocCSV(soc, dev),
+          onClose: () => this.closeDoc(), onPrint: () => this.printDoc(), onExportPDF: () => this.exportDocPDF(soc), onImage: () => this.exportDocImage(soc), onCSV: () => this.exportSocCSV(soc, dev),
           setClient: () => this.setDocMode('client'), setInternal: () => this.setDocMode('internal'),
           clientTabStyle: this._seg(dv.mode === 'client'), internalTabStyle: this._seg(dv.mode === 'internal'),
         };
@@ -4025,14 +4286,22 @@ class Component extends DCLogic {
       cloudBadge: this._cloudBadge(this.state.cloudStatus),
       cloudUserName: this._userName(),
       statusLabel: statusBadge.label, statusTextColor: statusBadge.text, statusTitle, statusHeaderStyle, statusDotStyle,
+      onlinePillStyle, onlinePulseStyle, onlineCount, onlineSummary, onlineTitle, onlineAvatars,
       clockTime: clock.time, clockDate: clock.date, clockLocation: clock.location,
       cloudSignOut: () => this.cloudSignOut(),
       isSchedule, isRecords, isAnalytics, isSocs, isFinance, sidebarOpen: this.state.sidebarOpen, toggleSidebar: () => this.toggleSidebar(),
       financeTitle: 'Payroll',
-      financeSub: 'One payroll editor for each SOC manpower list',
+      financeSub: 'SOC-linked and standalone payroll editors',
       socsRows, socsEmpty: socsRows.length === 0, socsCount: socsRows.length + (socsRows.length === 1 ? ' SOC' : ' SOCs'),
       payrollEditors, payrollTotals, payrollEmpty: payrollEditors.length === 0, payrollCount: payrollEditors.length + (payrollEditors.length === 1 ? ' payroll editor' : ' payroll editors'),
+      addStandalonePayroll: () => this.addStandalonePayroll(),
       payrollSearch: { value: this.state.payrollSearch || '', onChange: (e) => this.setPayrollSearch(e.target.value) },
+      payrollMonthFilter: { value: payrollMonthValue, onChange: (e) => this.setState({ payrollMonthF: e.target.value }) },
+      payrollMonthOptions: [{ value: 'all', label: 'All months' }].concat(months.map((m, i) => ({ value: String(i + 1), label: m }))).concat([{ value: 'unscheduled', label: 'Unscheduled' }]),
+      payrollKindFilter: { value: payrollKindValue, onChange: (e) => this.setState({ payrollKindF: e.target.value }) },
+      payrollKindOptions: [{ value: 'all', label: 'All payrolls' }, { value: 'soc', label: 'SOC payrolls' }, { value: 'standalone', label: 'Standalone' }, { value: 'linked', label: 'Linked standalone' }, { value: 'unlinked', label: 'Unlinked standalone' }],
+      payrollSortFilter: { value: payrollSortValue, onChange: (e) => this.setState({ payrollSort: e.target.value }) },
+      payrollSortOptions: [{ value: 'dateAsc', label: 'Date ↑' }, { value: 'dateDesc', label: 'Date ↓' }, { value: 'clientAsc', label: 'Client A-Z' }, { value: 'netDesc', label: 'Net high-low' }, { value: 'netAsc', label: 'Net low-high' }],
       rateRows, rateTotals, rateCount: rateRows.length + (rateRows.length === 1 ? ' rate record' : ' rate records'),
       rateSearch: { value: this.state.rateSearch || '', onChange: (e) => this.setRateSearch(e.target.value) },
       socsSearch: { value: this.state.socsSearch || '', onChange: (e) => this.setSocsSearch(e.target.value) },
