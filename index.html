@@ -81,6 +81,9 @@
           <button onClick="{{ onUndo }}" title="Undo last change" style="display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; border:1px solid var(--border); cursor:pointer; font-size:13px; font-weight:600; width:100%; text-align:left; background:var(--surface2); color:var(--text2); margin-bottom:6px;">↶&nbsp;&nbsp;Undo <span style="margin-left:auto; font-size:10px; font-weight:700; color:var(--text3);">{{ undoCount }}</span></button>
         </sc-if>
         <button onClick="{{ openSettings }}" style="display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; border:none; cursor:pointer; font-size:13px; font-weight:600; width:100%; text-align:left; background:transparent; color:var(--text2);">⚙&nbsp;&nbsp;Settings</button>
+        <sc-if value="{{ showLogout }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ cloudSignOut }}" style="display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; border:1px solid var(--border); cursor:pointer; font-size:13px; font-weight:600; width:100%; text-align:left; background:var(--surface2); color:var(--text2); margin-top:6px;">⏻&nbsp;&nbsp;Logout</button>
+        </sc-if>
       </aside>
     </div>
   </sc-if>
@@ -2331,7 +2334,10 @@ class Component extends DCLogic {
       this._afterSignIn();
     }).catch(() => this.setState({ gateBusy: false, gateError: 'Network error \u2014 check your connection' }));
   }
-  cloudSignOut() { if (this._sb) this._sb.auth.signOut().then(() => { if (typeof window !== 'undefined') window.location.reload(); }); }
+  cloudSignOut() {
+    if (this._sb) this._sb.auth.signOut().then(() => { if (typeof window !== 'undefined') window.location.reload(); });
+    else if (typeof window !== 'undefined') window.location.href = window.location.pathname;
+  }
   _afterSignIn() { this._cloudPull(true); this._cloudSubscribe(); }
   _cloudPull(initial) {
     const sb = this._sb; if (!sb) return;
@@ -3990,6 +3996,7 @@ class Component extends DCLogic {
       rootStyle,
       cloudMode: !!this.state.cloudMode,
       simulationMode: !!this.state.simulationMode,
+      showLogout: !!this.state.cloudMode || !!this.state.simulationMode,
       gateOpen: !!this.state.gateOpen,
       gateName: this.state.gateName || '', gatePw: this.state.gatePw || '',
       gateBusy: !!this.state.gateBusy, gateError: this.state.gateError || '', gateHasError: !!this.state.gateError,
