@@ -804,6 +804,9 @@
                     <sc-if value="{{ p.canAddEmployee }}" hint-placeholder-val="{{ true }}">
                       <button onClick="{{ p.onAddEmployee }}" style="background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 10px; font-size:12px; font-weight:700; color:var(--accent); cursor:pointer;">{{ p.addEmployeeLabel }}</button>
                     </sc-if>
+                    <sc-if value="{{ p.canDelete }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ p.onDelete }}" title="Delete this standalone payroll" style="background:transparent; border:1px solid #e53935; border-radius:7px; padding:7px 10px; font-size:12px; font-weight:700; color:#e53935; cursor:pointer;">🗑 Delete payroll</button>
+                    </sc-if>
                   </div>
                 </sc-if>
               </div>
@@ -3267,6 +3270,16 @@ class Component extends DCLogic {
     const payrolls = ((this.state.config && this.state.config.payrolls) || []).map(p => p.id === id ? { ...p, manpower: [...(p.manpower || []), this._standalonePayrollRow()] } : p);
     this.setCfg({ payrolls }, 'add payroll row');
   }
+  removeStandalonePayroll(id) {
+    const all = (this.state.config && this.state.config.payrolls) || [];
+    const target = all.find(p => p.id === id);
+    const label = (target && (target.title || target.client)) || 'this standalone payroll';
+    if (typeof window !== 'undefined' && !window.confirm('Delete "' + label + '"? You can undo this right after.')) return;
+    const payrolls = all.filter(p => p.id !== id);
+    this.setCfg({ payrolls }, 'delete payroll');
+    this.setState(s => { const o = { ...s.payrollOpen }; delete o['standalone:' + id]; return { payrollOpen: o }; });
+    this._toast('Standalone payroll deleted', true);
+  }
   toggleRecSort(field) { this.setState(s => ({ recSort: s.recSort.field === field ? { field, dir: -s.recSort.dir } : { field, dir: 1 } })); }
   toggleRecCat(key) { this.setState(s => ({ recCatOpen: { ...s.recCatOpen, [key]: s.recCatOpen[key] === false } })); }
   _recSort(rows, fields) { const { field, dir } = this.state.recSort; if (!field) return rows; const f = fields[field]; if (!f) return rows; return rows.slice().sort((a, b) => { const av = f(a), bv = f(b); if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir; return String(av).localeCompare(String(bv)) * dir; }); }
@@ -3791,6 +3804,7 @@ class Component extends DCLogic {
         hasLinkControl: true,
         link: { value: p.socLink || '', onChange: (e) => this.updateStandalonePayroll(p.id, 'socLink', e.target.value), options: socLinkOptions },
         canAddEmployee: true, addEmployeeLabel: '+ Employee', onAddEmployee: () => this.addStandalonePayrollRow(p.id),
+        canDelete: true, onDelete: () => this.removeStandalonePayroll(p.id),
         onToggle: () => this.togglePayrollEditor(payrollKey),
         onOpenSoc: () => { if (linked) this.openSocEdit(linked.ev.id, linked.soc.id); }
       };
