@@ -2621,18 +2621,8 @@ class Component extends DCLogic {
   }
 
   // ---- actions ----
-  setForm(name, val) {
-    if (!this._formPending) this._formPending = {};
-    this._formPending[name] = val;
-    clearTimeout(this._formTimers && this._formTimers[name]);
-    if (!this._formTimers) this._formTimers = {};
-    this._formTimers[name] = setTimeout(() => {
-      const patch = this._formPending || {};
-      this._formPending = {};
-      this.setState(s => ({ form: { ...s.form, ...patch } }));
-    }, 80);
-  }
-  setFormImmediate(name, val) { this.setState(s => ({ form: { ...s.form, [name]: val } })); }
+  setForm(name, val) { this.setState(s => ({ form: { ...s.form, [name]: val } })); }
+  setFormImmediate(name, val) { this.setForm(name, val); }
   _formVehicles() { const f = this.state.form; return f.vehicles ? [...f.vehicles] : (f.truck ? [{ name: f.truck, type: 'Equipment Vehicle' }] : []); }
   addEventVehicle() { const v = this._formVehicles(); v.push({ name: '', type: 'Equipment Vehicle' }); this.setFormImmediate('vehicles', v); }
   updateEventVehicle(i, field, val) { if (field === 'name' && val === '__add__') { const nv = this.addOnSpot('vehicle'); if (!nv) return; val = nv; } if (field === 'type' && val === '__add__') { const nv = this.addOnSpot('vehicle type'); if (!nv) return; val = nv; } const v = this._formVehicles(); v[i] = { ...v[i], [field]: val }; this.setFormImmediate('vehicles', v); }
@@ -2694,15 +2684,7 @@ class Component extends DCLogic {
   updateEquipRow(i, field, val) { const cur = (this.state.form.equipment || []).map((r, idx) => idx === i ? { ...r, [field]: field === 'qty' ? (parseInt(String(val).replace(/[^0-9]/g,''),10) || 0) : val } : r); this.setFormImmediate('equipment', cur); }
   removeEquipRow(i) { this.setFormImmediate('equipment', (this.state.form.equipment || []).filter((_, idx) => idx !== i)); }
 
-  _flushForm() {
-    const patch = this._formPending;
-    if (!patch || !Object.keys(patch).length) return;
-    Object.keys(this._formTimers || {}).forEach(k => clearTimeout(this._formTimers[k]));
-    this._formPending = {};
-    this.setState(s => ({ form: { ...s.form, ...patch } }));
-  }
   saveForm() {
-    this._flushForm();
     const fm = this.state.form; if (!fm) return;
     const day = this.parseRange(fm.date) ? this.parseRange(fm.date).start : null;
     const cost = parseFloat(String(fm.cost).replace(/[^0-9.]/g, '')) || 0;
@@ -2715,7 +2697,6 @@ class Component extends DCLogic {
   }
   // save the event (creating it if new) then immediately open the SOC picker for it
   saveFormThenSoc() {
-    this._flushForm();
     const fm = this.state.form; if (!fm) return;
     const day = this.parseRange(fm.date) ? this.parseRange(fm.date).start : null;
     const cost = parseFloat(String(fm.cost).replace(/[^0-9.]/g, '')) || 0;
