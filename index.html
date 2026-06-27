@@ -99,20 +99,6 @@
     </div>
   </sc-if>
 
-  <!-- ===== CLOUD SYNC BADGE ===== -->
-  <sc-if value="{{ cloudMode }}" hint-placeholder-val="{{ false }}">
-    <div title="{{ cloudUserName }}" style="position:fixed; bottom:18px; left:18px; z-index:115; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); padding:7px 12px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,0.18); font-size:11.5px; font-weight:600; color:{{ cloudBadge.text }};">
-      <span style="width:8px; height:8px; border-radius:50%; background:{{ cloudBadge.dot }};"></span>
-      <span>{{ cloudBadge.label }}</span>
-    </div>
-  </sc-if>
-  <sc-if value="{{ simulationMode }}" hint-placeholder-val="{{ false }}">
-    <div title="Simulation changes stay in this browser and do not sync to Supabase" style="position:fixed; bottom:18px; left:18px; z-index:116; display:flex; align-items:center; gap:8px; background:#201A0E; border:1px solid #7A5A20; padding:7px 12px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,0.22); font-size:11.5px; font-weight:700; color:#F5C86A;">
-      <span style="width:8px; height:8px; border-radius:50%; background:#F2A93C;"></span>
-      <span>Simulation mode</span>
-    </div>
-  </sc-if>
-
   <!-- ===== TEAM SIGN-IN GATE ===== -->
   <sc-if value="{{ gateOpen }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed; inset:0; z-index:200; background:#0E1014; display:flex; align-items:center; justify-content:center; padding:24px;">
@@ -143,7 +129,7 @@
   <!-- ===== HEADER ===== -->
   <header style="position:sticky; top:0; z-index:30; background:var(--surface); border-bottom:1px solid var(--border);">
     <div style="display:flex; align-items:center; gap:16px; padding:11px 20px; flex-wrap:wrap;">
-      <div style="display:flex; align-items:center; gap:11px; flex:1; min-width:190px;">
+      <div style="display:flex; align-items:center; gap:11px; flex:1; min-width:190px; flex-wrap:wrap;">
         <div style="width:34px; height:34px; border-radius:9px; background:var(--accent); display:flex; align-items:flex-end; justify-content:center; gap:2.5px; padding:8px 0; box-shadow:0 0 16px var(--accent-soft);">
           <div style="width:3px; height:9px; background:var(--accent-text); border-radius:2px; opacity:0.92;"></div>
           <div style="width:3px; height:15px; background:var(--accent-text); border-radius:2px; opacity:0.92;"></div>
@@ -152,6 +138,13 @@
         <div style="line-height:1.1;">
           <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px; letter-spacing:-0.01em; white-space:nowrap; color:var(--text);">RMA <span style="color:var(--accent);">Lights &amp; Sounds</span></div>
           <div style="font-size:11px; color:var(--text3); font-weight:500; letter-spacing:0.02em;">Production Schedule · 2026</div>
+        </div>
+        <div title="{{ statusTitle }}" style="{{ statusHeaderStyle }}">
+          <span style="{{ statusDotStyle }}"></span>
+          <span style="font-size:11px; font-weight:800; color:{{ statusTextColor }}; white-space:nowrap;">{{ statusLabel }}</span>
+          <span style="width:1px; height:18px; background:var(--border); flex-shrink:0;"></span>
+          <span style="font-family:'Space Grotesk',sans-serif; font-size:13px; font-weight:800; color:var(--text); white-space:nowrap;">{{ clockTime }}</span>
+          <span style="font-size:10.5px; font-weight:700; color:var(--text3); white-space:nowrap;">{{ clockDate }} · {{ clockLocation }}</span>
         </div>
       </div>
 
@@ -2127,6 +2120,7 @@ class Component extends DCLogic {
     recordDetail: null,
     recEditor: null,
     sidebarOpen: false,
+    clockNow: Date.now(),
     vw: (typeof window !== 'undefined' ? window.innerWidth : 1280),
   };
 
@@ -2263,9 +2257,13 @@ class Component extends DCLogic {
     this.setState({ events, config, monthIndex: mi, simulationMode });
     this._onResize = () => this.setState({ vw: window.innerWidth });
     window.addEventListener('resize', this._onResize);
+    this._clockTimer = window.setInterval(() => this.setState({ clockNow: Date.now() }), 30000);
     this._cloudBoot();
   }
-  componentWillUnmount() { if (this._onResize) window.removeEventListener('resize', this._onResize); }
+  componentWillUnmount() {
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+    if (this._clockTimer) window.clearInterval(this._clockTimer);
+  }
 
   _simulationMode() {
     if (typeof window === 'undefined') return false;
@@ -2308,6 +2306,18 @@ class Component extends DCLogic {
       locked: { label: 'Locked', dot: '#8A93A3', text: 'var(--text2)' }
     };
     return map[status] || map.connecting;
+  }
+  _clockMeta() {
+    const dt = new Date(this.state.clockNow || Date.now());
+    try {
+      return {
+        time: new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', hour12: true }).format(dt),
+        date: new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' }).format(dt),
+        location: 'Manila, PH'
+      };
+    } catch (e) {
+      return { time: dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), date: dt.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }), location: 'Local' };
+    }
   }
   _cloudBoot() {
     const cfg = this._cloudCfg();
@@ -3112,6 +3122,12 @@ class Component extends DCLogic {
     const vw = this.state.vw;
     const isMobile = vw < 760;
     const isDesktop = !isMobile;
+    const clock = this._clockMeta();
+    const baseCloudBadge = this._cloudBadge(this.state.cloudStatus);
+    const statusBadge = this.state.simulationMode ? { label: 'Simulation mode', dot: '#F2A93C', text: '#F5C86A' } : (this.state.cloudMode ? baseCloudBadge : { label: 'Local preview', dot: '#8A93A3', text: 'var(--text2)' });
+    const statusTitle = (this.state.cloudMode ? this._userName() + ' · ' : '') + statusBadge.label + ' · ' + clock.date + ' ' + clock.time + ' · ' + clock.location;
+    const statusHeaderStyle = { display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '999px', border: '1px solid var(--border)', background: 'var(--surface2)', minWidth: 0, maxWidth: '100%', boxShadow: '0 6px 18px rgba(0,0,0,0.12)' };
+    const statusDotStyle = { width: '9px', height: '9px', borderRadius: '50%', background: statusBadge.dot, boxShadow: '0 0 0 4px ' + this.rgba(statusBadge.dot, isLight ? 0.14 : 0.20) + ', 0 0 15px ' + statusBadge.dot, flexShrink: 0 };
     const teamNames = (cfg.teams || []).map(t => t.name);
     const allTeamOptions = teamNames.concat(['Unassigned']);
     const employeeRates = (typeof window !== 'undefined' && window.RMA_EMPLOYEE_RATES) ? window.RMA_EMPLOYEE_RATES : [];
@@ -4008,6 +4024,8 @@ class Component extends DCLogic {
       cloudStatus: this.state.cloudStatus || 'local',
       cloudBadge: this._cloudBadge(this.state.cloudStatus),
       cloudUserName: this._userName(),
+      statusLabel: statusBadge.label, statusTextColor: statusBadge.text, statusTitle, statusHeaderStyle, statusDotStyle,
+      clockTime: clock.time, clockDate: clock.date, clockLocation: clock.location,
       cloudSignOut: () => this.cloudSignOut(),
       isSchedule, isRecords, isAnalytics, isSocs, isFinance, sidebarOpen: this.state.sidebarOpen, toggleSidebar: () => this.toggleSidebar(),
       financeTitle: 'Payroll',
