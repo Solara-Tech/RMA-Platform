@@ -2473,23 +2473,31 @@ class Component extends DCLogic {
   _snapEvents(events) { this._cloudSnap = {}; (events || []).forEach(e => { this._cloudSnap[e.id] = JSON.stringify(e); }); }
   _cloudPushEvents(events) {
     const sb = this._sb; if (!sb) return;
-    const snap = this._cloudSnap || {};
-    const seen = {}; const upserts = [];
-    (events || []).forEach(e => { seen[e.id] = 1; const j = JSON.stringify(e); if (snap[e.id] !== j) upserts.push({ id: e.id, data: e, updated_at: new Date().toISOString(), updated_by: this._userName() }); });
-    const deletes = Object.keys(snap).filter(id => !seen[id]);
-    this._snapEvents(events);
+    this._pendingEvents = events;
     this.setState({ cloudStatus: 'saving' });
-    const done = () => this.setState({ cloudStatus: 'synced' });
-    const fail = () => this.setState({ cloudStatus: 'error' });
-    if (upserts.length) sb.from('app_events').upsert(upserts).then(({ error }) => error ? fail() : done()).catch(fail);
-    if (deletes.length) sb.from('app_events').delete().in('id', deletes).then(() => {}).catch(fail);
-    if (!upserts.length && !deletes.length) done();
+    clearTimeout(this._pushEventsTimer);
+    this._pushEventsTimer = setTimeout(() => {
+      const snap = this._cloudSnap || {};
+      const seen = {}; const upserts = [];
+      (this._pendingEvents || []).forEach(e => { seen[e.id] = 1; const j = JSON.stringify(e); if (snap[e.id] !== j) upserts.push({ id: e.id, data: e, updated_at: new Date().toISOString(), updated_by: this._userName() }); });
+      const deletes = Object.keys(snap).filter(id => !seen[id]);
+      this._snapEvents(this._pendingEvents);
+      const done = () => this.setState({ cloudStatus: 'synced' });
+      const fail = () => this.setState({ cloudStatus: 'error' });
+      if (upserts.length) sb.from('app_events').upsert(upserts).then(({ error }) => error ? fail() : done()).catch(fail);
+      if (deletes.length) sb.from('app_events').delete().in('id', deletes).then(() => {}).catch(fail);
+      if (!upserts.length && !deletes.length) done();
+    }, 700);
   }
   _cloudPushConfig(config) {
     const sb = this._sb; if (!sb) return;
+    this._pendingConfig = config;
     this.setState({ cloudStatus: 'saving' });
-    sb.from('app_config').upsert({ id: 'config', data: config, updated_at: new Date().toISOString(), updated_by: this._userName() })
-      .then(({ error }) => this.setState({ cloudStatus: error ? 'error' : 'synced' })).catch(() => this.setState({ cloudStatus: 'error' }));
+    clearTimeout(this._pushConfigTimer);
+    this._pushConfigTimer = setTimeout(() => {
+      sb.from('app_config').upsert({ id: 'config', data: this._pendingConfig, updated_at: new Date().toISOString(), updated_by: this._userName() })
+        .then(({ error }) => this.setState({ cloudStatus: error ? 'error' : 'synced' })).catch(() => this.setState({ cloudStatus: 'error' }));
+    }, 700);
   }
   _cloudSubscribe() {
     const sb = this._sb; if (!sb || this._sbChan) return;
